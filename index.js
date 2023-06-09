@@ -28,9 +28,19 @@ async function run() {
     await client.connect();
 
     const popularCollection = client.db("footballDb").collection("popular");
+    const cartCollection = client.db("footballDb").collection("popular");
+
+
     app.get('/popular', async(req, res) => {
         const result = await popularCollection.find().toArray();
         res.send(result)
+    })
+
+    app.post('/carts', async(req, res) => {
+      const item = req.body;
+      console.log(item);
+      const result = await cartCollection.insertOne(item)
+      res.send(result)
     })
 
 
