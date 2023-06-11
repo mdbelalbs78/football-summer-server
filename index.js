@@ -27,9 +27,15 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
+    const usersCollection = client.db("footballDb").collection("users");
     const popularCollection = client.db("footballDb").collection("popular");
     const cartCollection = client.db("footballDb").collection("popular");
 
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    })
 
     app.get('/popular', async(req, res) => {
         const result = await popularCollection.find().toArray();
