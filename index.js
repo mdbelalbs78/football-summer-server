@@ -44,11 +44,26 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const usersCollection = client.db("footballDb").collection("users");
-    const popularCollection = client.db("footballDb").collection("popular");
+    // const popularCollection = client.db("footballDb").collection("popular");
     const cartCollection = client.db("footballDb").collection("popular");
+    const selectedCollection = client.db('sports').collection('selected');
+
+
+    app.get('/selectedClassData', async (req, res) => {
+      
+      const result = await selectedCollection.find().toArray();
+      res.send(result);
+    })
+
+
+    app.post('/selectedClassData', async (req, res) => {
+      const user = req.body;
+      const result = await selectedCollection.insertOne(user);
+      res.send(result);
+    })
 
     app.get('/users', verifyJWT, async(req, res) => {
       const result = await usersCollection.find().toArray();
@@ -99,19 +114,6 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/users/instructor/:email', verifyJWT, async(req, res) =>{
-      const email = req.params.email;
-
-      if (req.decoded.email !== email) {
-        res.send({ instructor: false })
-      }
-
-      const query = {email: email}
-      const user = await usersCollection.findOne(query)
-      const result = {instructor: user?.role === 'instructor'}
-      res.send(result)
-    })
-
     app.patch('/users/admin/:id', async(req, res) => {
       const id = req.params.id;
       console.log(id);
@@ -125,7 +127,19 @@ async function run() {
       res.send(result);
     })
 
-    
+
+    app.get('/users/instructor/:email', verifyJWT, async(req, res) =>{
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        res.send({ instructor: false })
+      }
+
+      const query = {email: email}
+      const user = await usersCollection.findOne(query)
+      const result = {instructor: user?.role === 'instructor'}
+      res.send(result)
+    })
 
     app.patch('/users/instructor/:id', async(req, res) => {
       const id = req.params.id;
@@ -152,8 +166,6 @@ async function run() {
         res.send([])
       }
 
-      
-
       const query = {email: email}
       const result = await cartCollection.find(query).toArray();
       res.send(result)
@@ -167,6 +179,13 @@ async function run() {
     })
 
     app.delete('/carts/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await cartCollection.deleteOne(query)
+      res.send(result)
+    })
+
+    app.delete('/admin/:id', async(req, res) => {
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
       const result = await cartCollection.deleteOne(query)
