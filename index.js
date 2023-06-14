@@ -47,11 +47,86 @@ async function run() {
     // await client.connect();
 
     const usersCollection = client.db("footballDb").collection("users");
-    // const popularCollection = client.db("footballDb").collection("popular");
-    const cartCollection = client.db("footballDb").collection("popular");
-    const selectedCollection = client.db('sports').collection('selected');
+    const classCollection = client.db("footballDb").collection("class")
+    const instructorCollection = client.db("footballDb").collection("instructor")
+    const selectedCollection = client.db('footballDb').collection('selected');
 
 
+    // class
+    app.get('/class', async (req, res) => {
+      const result = await classCollection.find().toArray();
+      res.send(result);
+    })
+
+    app.post('/classes', async (req, res) => {
+      const user = req.body;
+      const result = await classCollection.insertOne(user);
+      res.send(result);
+    })
+
+    
+    app.delete('/classes/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await classCollection.deleteOne(query)
+      res.send(result)
+    })
+
+
+    // instructor 
+    app.get('/instructor', async (req, res) => {
+      const result = await instructorCollection.find().toArray();
+      res.send(result);
+    })
+
+    app.post('/instructor', async (req, res) => {
+      const user = req.body;
+      const result = await instructorCollection.insertOne(user);
+      res.send(result);
+    })
+
+
+     // approved classes
+     app.patch("/classes/approved/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "approved",
+        },
+      };
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    // Deny classes
+    app.patch("/classes/deny/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "deny",
+        },
+      };
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    // feedback classes
+    app.patch("/classes/feedback/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          feedback: query,
+        },
+      };
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    // selected
     app.get('/selectedClassData', async (req, res) => {
       
       const result = await selectedCollection.find().toArray();
@@ -65,6 +140,8 @@ async function run() {
       res.send(result);
     })
 
+
+    // user
     app.get('/users', verifyJWT, async(req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result)
@@ -126,6 +203,31 @@ async function run() {
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
     })
+    app.get('/users/instructor/:email', verifyJWT, async(req, res) =>{
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        res.send({ instructor: false })
+      }
+
+      const query = {email: email}
+      const user = await usersCollection.findOne(query)
+      const result = {instructor: user?.role === 'instructor'}
+      res.send(result)
+    })
+
+    app.patch('/users/instructor/:id', async(req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const filter = {_id: new ObjectId(id)};
+      const updateDoc = {
+        $set: {
+          role: 'instructor'
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    })
 
 
     app.get('/users/instructor/:email', verifyJWT, async(req, res) =>{
@@ -154,43 +256,43 @@ async function run() {
       res.send(result);
     })
 
-    app.get('/popular', async(req, res) => {
-        const result = await popularCollection.find().toArray();
-        res.send(result)
-    })
+    // app.get('/popular', async(req, res) => {
+    //     const result = await popularCollection.find().toArray();
+    //     res.send(result)
+    // })
 
-    app.get('/carts',async(req, res) =>{
-      const email = req.query.email;
-      console.log(email);
-      if(!email){
-        res.send([])
-      }
+    // app.get('/carts',async(req, res) =>{
+    //   const email = req.query.email;
+    //   console.log(email);
+    //   if(!email){
+    //     res.send([])
+    //   }
 
-      const query = {email: email}
-      const result = await cartCollection.find(query).toArray();
-      res.send(result)
-    })
+    //   const query = {email: email}
+    //   const result = await cartCollection.find(query).toArray();
+    //   res.send(result)
+    // })
 
-    app.post('/carts', async(req, res) => {
-      const item = req.body;
-      console.log(item);
-      const result =  await cartCollection.insertOne(item)
-      res.send(result)
-    })
+    // app.post('/carts', async(req, res) => {
+    //   const item = req.body;
+    //   console.log(item);
+    //   const result =  await cartCollection.insertOne(item)
+    //   res.send(result)
+    // })
 
-    app.delete('/carts/:id', async(req, res) => {
-      const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
-      const result = await cartCollection.deleteOne(query)
-      res.send(result)
-    })
+    // app.delete('/carts/:id', async(req, res) => {
+    //   const id = req.params.id;
+    //   const query = {_id: new ObjectId(id)}
+    //   const result = await cartCollection.deleteOne(query)
+    //   res.send(result)
+    // })
 
-    app.delete('/admin/:id', async(req, res) => {
-      const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
-      const result = await cartCollection.deleteOne(query)
-      res.send(result)
-    })
+    // app.delete('/instructor/:id', async(req, res) => {
+    //   const id = req.params.id;
+    //   const query = {_id: new ObjectId(id)}
+    //   const result = await cartCollection.deleteOne(query)
+    //   res.send(result)
+    // })
 
 
     // Send a ping to confirm a successful connection
